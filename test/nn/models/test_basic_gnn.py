@@ -157,6 +157,42 @@ def test_one_layer_gnn(out_dim, jk):
     assert model(x, edge_index).size() == (3, out_channels)
 
 
+def test_channel_list():
+    x = torch.randn(3, 8)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    model = GraphSAGE(8, channel_list=[16, 8])
+    assert str(model) == 'GraphSAGE(8, 8, num_layers=2)'
+    assert model(x, edge_index).size() == (3, 8)
+
+    model = GraphSAGE(8, channel_list=[16, 8], out_channels=4)
+    assert str(model) == 'GraphSAGE(8, 4, num_layers=2)'
+    assert model(x, edge_index).size() == (3, 4)
+
+    model = GraphSAGE(8, channel_list=[16, 16], out_channels=4, jk='cat')
+    assert model(x, edge_index).size() == (3, 4)
+
+    with pytest.raises(ValueError, match='channel_list'):
+        GraphSAGE(8, channel_list=[], out_channels=4)
+
+    with pytest.raises(ValueError, match='channel_list'):
+        GraphSAGE(8, hidden_channels=16, channel_list=[16, 8])
+
+    with pytest.raises(ValueError, match='channel_list'):
+        GraphSAGE(8, num_layers=2, channel_list=[16, 8])
+
+    with pytest.raises(ValueError, match='jk'):
+        GraphSAGE(8, channel_list=[16, 8], jk='cat')
+
+
+def test_gat_channel_list():
+    x = torch.randn(3, 8)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    model = GAT(8, channel_list=[16, 16], out_channels=8, heads=4)
+    assert model(x, edge_index).size() == (3, 8)
+
+
 @pytest.mark.parametrize('norm', [
     'BatchNorm',
     'GraphNorm',
